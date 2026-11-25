@@ -1,0 +1,8 @@
+# Projector-safe console: always light, high contrast (see docs/06_TASK_console_frontend.md)
+[theme]
+base = "light"
+primaryColor = "#dc2626"
+backgroundColor = "#f8fafc"
+secondaryBackgroundColor = "#e2e8f0"
+textColor = "#0f172a"
+font = "sans serif"

@@ -1,5 +1,5 @@
 """LogSeal console (projector-safe). Run: streamlit run app.py --server.port 8501
-Options: LOGSEAL_CONFIG=config.local.json (env) | ?stage=1 hides the sidebar | ?mock=ok|edit|rewrite tests without a backend"""
+Options: LOGSEAL_CONFIG=config.local.json (env) | ?stage=1 hides the sidebar | ?mock=ok|edit|rewrite|offline tests without a backend"""
 import html, json, os, time
 import streamlit as st
 
@@ -15,15 +15,26 @@ except ImportError:
 
 def _mock(kind):
     h = lambda c: c * 64
-    # edit: server differs, vaults still hold the original.  rewrite: server looks clean, both vaults reject.
-    nodes = [{"name": "Server", "role": "server", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "edit"},
-             {"name": "Vault 1", "role": "vault", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "rewrite"},
-             {"name": "Vault 2", "role": "vault", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "rewrite"}]
-    fnd = [] if kind == "ok" else [{"class": "EDIT" if kind == "edit" else "WITNESS_CONFLICT", "seq": 120, "expected": h("a"), "actual": h("b"),
-                                    "detail": "Record 120 was changed after it was sealed.", "confirmed_by": ["Vault 1", "Vault 2"]}]
+    # edit: server differs, vaults hold the original. rewrite: server looks clean, both vaults reject.
+    # offline: one vault is grey, the other two still agree.
+    edit, rewrite, offline = kind == "edit", kind == "rewrite", kind == "offline"
+    vh = h("b") if rewrite else h("a")
+    nodes = [{"name": "Server", "role": "server", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": not edit},
+             {"name": "Vault 1", "role": "vault", "reachable": True, "head_seq": 412, "head_hash": vh, "agrees": not rewrite},
+             {"name": "Vault 2", "role": "vault", "reachable": not offline, "head_seq": None if offline else 412,
+              "head_hash": None if offline else vh, "agrees": None if offline else not rewrite}]
+    if edit:
+        fnd = [{"class": "EDIT", "seq": 120, "expected": h("a"), "actual": h("b"),
+                "detail": "Record 120 was changed after it was sealed.", "confirmed_by": ["Vault 1", "Vault 2"]}]
+    elif rewrite:
+        fnd = [{"class": "WITNESS_CONFLICT", "seq": 120, "expected": h("b"), "actual": h("a"),
+                "detail": "The server's records were rewritten: the vaults remember record 120 differently.",
+                "confirmed_by": ["Vault 1", "Vault 2"]}]
+    else:
+        fnd = []
     feed = [{"seq": i, "ts": f"2026-11-25T10:31:{i % 60:02d}", "event": "login_fail" if i % 7 == 0 else "file_read", "user": "alice",
              "src_ip": "10.0.0.7", "ok": not (fnd and i == 120)} for i in range(100, 130)]
-    return {"status": "OK" if kind == "ok" else "TAMPERED", "checked_at": "mock", "log_lines": 412, "ledger_entries": 412,
+    return {"status": "TAMPERED" if fnd else "OK", "checked_at": "mock", "log_lines": 412, "ledger_entries": 412,
             "findings": fnd, "nodes": nodes, "feed": feed}
 
 def run_verify(mock):
@@ -103,7 +114,7 @@ def steps():
 
 def banner(r):
     txt, col, cls = {"OK": ("ALL RECORDS INTACT", GREEN, ""), "PENDING": ("SEALING...", AMBER, ""),
-                     "TAMPERED": ("TAMPERING DETECTED", RED, "pulse")}[r["status"]]
+                     "TAMPERED": ("TAMPERING DETECTED", RED, "pulse")}.get(r.get("status"), ("CHECKING...", AMBER, ""))
     meta = f'{r["log_lines"]:,} records checked · {r["ledger_entries"]:,} sealed'
     st.markdown(f'<div class="banner {cls}" style="background:{col}"><div class="banner-title">{txt}</div><div class="banner-meta">{meta}</div></div>', unsafe_allow_html=True)
 
@@ -137,7 +148,7 @@ def alarm(r, raw):
                     unsafe_allow_html=True)
         old, now = seen.get(str(f["seq"])), (lines[f["seq"] - 1] if 0 < f["seq"] <= len(lines) else None)
         if f["class"] == "EDIT" and old and now:
-            st.caption("Before / after (display only; the proof is the fingerprint mismatch)")
+            st.markdown('<p class="beforeafter">Before / after (display only; the proof is the fingerprint mismatch)</p>', unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             c1.code(old, language="json"); c2.code(now, language="json")
 

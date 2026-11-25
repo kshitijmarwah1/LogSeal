@@ -1,31 +1,32 @@
-# Replace the placeholder handles with the four real accounts before the first push.
+# P3 is the only handle still pending. Set it before code freeze.
+# P1 @kshitijmarwah1, P2 @akash77007, P4 and lead @Vic-41148.
 # Until then this file documents the file lanes agreed in CONTRIBUTING.md.
 
 # Shared law: change only after all four people agree.
-/config.json                @team-lead
-/config.local.json          @team-lead
-/docs/03_CONTRACT.md        @team-lead
-/docs/12_PARALLEL_PLAN.md   @team-lead
-/CODEOWNERS                 @team-lead
-/TASKS.md                   @team-lead
+/config.json                @Vic-41148
+/config.local.json          @Vic-41148
+/docs/03_CONTRACT.md        @Vic-41148
+/docs/12_PARALLEL_PLAN.md   @Vic-41148
+/CODEOWNERS                 @Vic-41148
+/TASKS.md                   @Vic-41148
 
 # Person 1: core
-/seal.py                    @p1-core
-/verify.py                  @p1-core
+/seal.py                    @kshitijmarwah1
+/verify.py                  @kshitijmarwah1
 
 # Person 2: vault
-/witness.py                 @p2-vault
+/witness.py                 @akash77007
 
 # Person 3: console
 /app.py                     @p3-console
 
 # Person 4: scenarios and measurement
-/gen.py                     @p4-scenarios
-/attack.py                  @p4-scenarios
-/ml.py                      @p4-scenarios
-/bench.py                   @p4-scenarios
+/gen.py                     @Vic-41148
+/attack.py                  @Vic-41148
+/ml.py                      @Vic-41148
+/bench.py                   @Vic-41148
 
 # Shared support. Any owner may propose a change; the lead merges it.
-/tests/                     @team-lead
-/scripts/                   @team-lead
-/Makefile                   @team-lead
+/tests/                     @Vic-41148
+/scripts/                   @Vic-41148
+/Makefile                   @Vic-41148

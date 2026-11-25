@@ -48,7 +48,7 @@ Order of writes: (1) append line to log + fsync, (2) append entry to ledger + fs
 Trust assumptions to state out loud: at least one vault is honest, vaults and their storage are not controlled by the attacker, tampering before sealing is out of scope, timestamps are not compared across machines (use seq and hashes only).
 
 ## ML (secondary, tiny)
-10-second windows, features = counts of event types, distinct IPs, distinct users, fail ratio. IsolationForest fit on benign windows only, threshold = 5th percentile of training scores. Evaluated on a synthetic labeled holdout from our own generator. Numbers are labelled "synthetic data, measured by our scripts today".
+10-second windows, 18 features: event counts, window total, distinct IPs and users, fail fraction, per-IP failure count and share, failure gaps, entropy, and fail-then-success. IsolationForest fits benign windows only. The last 20% of training windows form a validation block; the alarm threshold is the 1st percentile of validation scores, never the test set. Evaluated on a synthetic labeled holdout from our own generator. Numbers are labelled "synthetic data, measured by our scripts today".
 
 ## Production path (slide only, not built)
 Merkle batching and inclusion proofs, signed checkpoints, quorum across organisations, anchoring to a public transparency log (Rekor) or immudb, S3 Object Lock for raw archive.

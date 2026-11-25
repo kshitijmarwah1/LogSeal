@@ -18,9 +18,9 @@ Reuses `seal.py` functions, so it is only a few dozen lines.
 - The attacker has the HMAC key on purpose. The vaults are what stop it, not the key.
 
 ## ml.py (about 20 min)
-1. Windows of 10 seconds. Features per window: counts of each event type, `n_events`, distinct IPs, distinct users, `fail_ratio`.
-2. `python ml.py train` fits `IsolationForest(random_state=42)` on benign train windows only. Threshold = **5th percentile of the training `score_samples`** (lower = more abnormal). Do not guess a `contamination` value. Save with joblib (`model.joblib`).
-3. `python ml.py eval` scores the labeled test windows (a window is positive if it contains any attack event), prints and writes `metrics.json` (contract shape). **Report only what the script prints.**
+1. Windows of 10 seconds. Features per window: event counts, `window_total`, distinct IPs and users, `fail_fraction`, per-IP failure count and share, failure gaps, entropy, and fail-then-success.
+2. `python ml.py train` fits `IsolationForest(random_state=42)` on benign train windows only. The last 20% of training windows form a validation block. Threshold = **1st percentile of validation `score_samples`** (lower = more abnormal). Do not use the test set to choose it. Do not guess a `contamination` value. Save with joblib (`model.joblib`).
+3. `python ml.py eval` scores the labeled test windows (a window is positive if it contains any attack event). It prints and writes `metrics.json` (contract shape). Extra window, burst, rule-baseline and interval values go to `metrics_detail.json`. **Report only what the script prints.**
 4. Importable: `flag_windows(events) -> list[{"window_start","score","flagged"}]`, used by the console chart.
 5. Honest wording: "trained and evaluated on synthetic data from our own generator and features, so the scores are optimistic by construction; a real deployment would need real logs".
 

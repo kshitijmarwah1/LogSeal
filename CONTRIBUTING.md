@@ -66,7 +66,7 @@ Four people on one machine: use four names. Four people on four laptops: use one
 
 ```
 make check     # contract shape: config, signatures, stdlib-only
-make test      # 42 tests: mutations, vault API, end-to-end, restart
+make test      # 51 core tests, 56 with the ML tests
 make selftest  # the original 20-check core test
 make lint      # ruff F rules
 ```

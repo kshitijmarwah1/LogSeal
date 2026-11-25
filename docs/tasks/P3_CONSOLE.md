@@ -11,12 +11,13 @@ Detailed reference: `docs/06_TASK_console_frontend.md` and the contract `docs/03
 make demo NAME=p3
 ```
 
-Open the console URL that the stack prints. `app.py` already has three mock states, so you do not wait for P1:
+Open the console URL that the stack prints. `app.py` already has four mock states, so you do not wait for P1:
 
 ```
 http://127.0.0.1:<port>/?mock=ok
 http://127.0.0.1:<port>/?mock=edit
 http://127.0.0.1:<port>/?mock=rewrite
+http://127.0.0.1:<port>/?mock=offline
 ```
 
 ## Do these in order

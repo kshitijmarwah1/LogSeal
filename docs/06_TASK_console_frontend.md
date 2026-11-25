@@ -31,7 +31,7 @@ Install: `pip install streamlit` (plus `scikit-learn numpy joblib` for the ML ch
 5. Chart and benchmark panel only if everything above works
 
 ## Acceptance
-- flip between the three mock states: banner and tiles change correctly
+- flip between the four mock states: banner and tiles change correctly
 - real `verify()`: edit a line in the log -> red within 3 seconds, record number shown
 - kill a vault -> its tile greys out, console keeps running
 - readable from the back of a classroom on a projector (test it)

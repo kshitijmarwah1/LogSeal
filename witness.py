@@ -1,7 +1,7 @@
 """LogSeal vault (witness): independent append-only store of (seq, prev, hash).
 Server : python witness.py --name "Vault 1" --port 8101 [--allow-reset] [--dir DIR]
 Client : push(entry, cfg), head(url, timeout), entry(url, seq, timeout), reset(cfg)  (stdlib only)"""
-import argparse, json, os, re, socket, socketserver, threading, time, urllib.request, urllib.error
+import argparse, html, json, os, re, socket, socketserver, threading, time, urllib.request, urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ZERO = "0" * 64
@@ -25,7 +25,7 @@ def _req(url, body=None, timeout=1.0):
 def _push_one(w, entry, timeout):
     body = {k: entry[k] for k in ("seq", "prev", "hash")}
     try:
-        status, j = _req(w["url"] + "/append", body, timeout)
+        status, j = _req(w["url"].rstrip("/") + "/append", body, timeout)
         return {"name": w["name"], "ok": bool(j.get("ok")), "status": status,
                 "error": j.get("error"), "count": j.get("count")}
     except Exception as e:
@@ -49,14 +49,14 @@ def push(entry, cfg):
 
 def head(url, timeout=1.0):
     try:
-        status, j = _req(url + "/head", None, timeout)
+        status, j = _req(url.rstrip("/") + "/head", None, timeout)
         return j if status == 200 else None
     except Exception:
         return None
 
 def entry(url, seq, timeout=1.0):
     try:
-        status, j = _req(f"{url}/entry/{int(seq)}", None, timeout)
+        status, j = _req(f"{url.rstrip('/')}/entry/{int(seq)}", None, timeout)
         return j if status == 200 else None
     except Exception:
         return None
@@ -66,7 +66,7 @@ def reset(cfg):
     t = cfg.get("witness_timeout_s", 1.0)
     def one(w):
         try:
-            return {"name": w["name"], "status": _req(w["url"] + "/reset", {}, t)[0]}
+            return {"name": w["name"], "status": _req(w["url"].rstrip("/") + "/reset", {}, t)[0]}
         except Exception as e:
             return {"name": w["name"], "status": None, "error": str(e)[:80]}
     return _parallel(one, cfg.get("witnesses", []))
@@ -146,13 +146,14 @@ class Vault:
             strip = f"<div class='s red'>REWRITE ATTEMPT REJECTED<div class='d'>{rows}</div></div>"
         else:
             strip = "<div class='s green'>ALL RECORDS CONSISTENT</div>"
+        safe_name = html.escape(self.name)
         return f"""<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="2">
-<title>{self.name}</title><style>
+<title>{safe_name}</title><style>
 body{{font-family:Segoe UI,Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0;padding:3vh 4vw}}
-h1{{font-size:7vw;margin:0}} .k{{font-size:3.6vw;margin:1.5vh 0}} code{{background:#e2e8f0;padding:0 .4em;border-radius:6px}}
-.s{{font-size:4.5vw;font-weight:800;color:#fff;padding:2vh 2vw;border-radius:16px;margin-top:3vh}}
-.green{{background:#16a34a}} .red{{background:#dc2626}} .d{{font-size:2.2vw;font-weight:500;margin-top:1vh}}
-</style></head><body><h1>{self.name}</h1>
+h1{{font-size:clamp(44px,7vw,120px);margin:0}} .k{{font-size:clamp(28px,3.8vw,64px);margin:1.5vh 0}} code{{background:#e2e8f0;padding:0 .4em;border-radius:6px}}
+.s{{font-size:clamp(32px,4.5vw,80px);font-weight:800;color:#fff;padding:2vh 2vw;border-radius:16px;margin-top:3vh}}
+.green{{background:#16a34a}} .red{{background:#dc2626}} .d{{font-size:clamp(20px,2.4vw,38px);font-weight:500;margin-top:1vh}}
+</style></head><body><h1>{safe_name}</h1>
 <div class="k">Records held: <b>{n}</b></div>
 <div class="k">Latest fingerprint: <code>{fp}</code></div>{strip}</body></html>"""
 
