@@ -32,10 +32,23 @@ Your `NAME` is your lane: `p1`, `p2`, `p3`, `p4`. Each name gets its own ports, 
 | P4-2 | P4 scenarios | Run rewrite, wipe, restore | Server green locally, vaults red, restore is clean |
 | P4-3 | P4 scenarios | Make the measured numbers | `metrics.json` exists and contains only script output |
 | P4-4 | P4 scenarios | Run the benchmark | `bench.json` exists and prints mutation count and median |
-| I-1 | All | End-to-end with two vaults | `make demo` is green |
+| I-1 | All | End-to-end with two vaults | `make demo-check` passes all three acts |
 | I-2 | All | Judge-edit rehearsal | Stop the generator, edit a line, see red in 3 s |
 | I-3 | All | Reset drill | `make down`, `make reset`, `make demo` in under 30 s |
 | I-4 | All | Code freeze and two rehearsals | Two clean runs, back to back |
+
+## Lead lane (not P1 to P4)
+
+The lead owns integration. The lead does not take a code lane.
+
+| ID | Task | Command |
+|---|---|---|
+| I-1 | Prove the three demo acts on real vaults | `make demo-check` |
+| I-2 | Judge-edit rehearsal on the demo laptop | manual, 3 s alarm |
+| I-3 | Reset drill under 30 s | `make down`, `make reset`, `make demo` |
+| I-4 | Code freeze and two rehearsals | manual |
+
+`make ci` now runs `demo-check`, so a broken demo act fails CI before the pitch.
 
 ## Integration checkpoints
 
@@ -61,6 +74,6 @@ Your `NAME` is your lane: `p1`, `p2`, `p3`, `p4`. Each name gets its own ports, 
 ## Known gaps
 
 - `app.py` is smoke-tested, not yet checked on the projector.
-- `metrics.json` and `bench.json` are not shipped. Run the scripts on the day.
+- `metrics.json` and `bench.json` were measured by the lead on the development laptop. P4 must repeat them on the demo laptop. Exact output is in `docs/13_VERIFICATION.md`.
 - The real vault IPs are not in `config.json` yet. P2 owns that after the network check.
 - The handles in `CODEOWNERS` are placeholders.

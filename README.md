@@ -22,7 +22,8 @@ The private stack gives you two vaults, a generator and a console on your own po
 | `make status NAME=p1` | Show process and vault state |
 | `make down NAME=p1` | Stop the stack |
 | `make reset NAME=p1` | Clear log, ledger and vaults |
-| `make ci` | Contract, tests, selftest, lint |
+| `make demo-check` | All three demo acts on real vaults |
+| `make ci` | Contract, tests, selftest, lint, demo acts |
 
 ## Status
 
@@ -30,8 +31,8 @@ The private stack gives you two vaults, a generator and a console on your own po
 |---|---|
 | `seal.py`, `verify.py`, `witness.py` | Done. Covered by `tests/` and `seal.py --selftest` |
 | `gen.py`, `attack.py`, `bench.py`, `ml.py` | Done, tested |
-| `app.py` | Smoke-tested with 3 mock states. Projector test is still open |
-| `metrics.json`, `bench.json` | Not shipped. Run the scripts on the day and quote only their output |
+| `app.py` | Checked in a real browser: three mock states and a live edit at 2.33 s. Projector test is still open |
+| `metrics.json`, `bench.json` | Measured by the lead on the dev laptop. P4 must repeat them on the demo laptop |
 | `scripts/`, `tests/`, CI | Base ready for four parallel lanes |
 
 ## Manual setup
@@ -67,6 +68,8 @@ Reset: stop `gen.py`, then `python attack.py restore` (after an attack) or `pyth
 | `TASKS.md` | Board, owners, done tests, checkpoints |
 | `CONTRIBUTING.md` | Lanes, branches, review, definition of done |
 | `docs/12_PARALLEL_PLAN.md` | How the four-lane base works |
+| `docs/13_VERIFICATION.md` | What the base proved, and what is still open |
+| `docs/14_MODEL_REPORT.md` | Burst-detector design, exact numbers and improvement plan |
 | `docs/tasks/` | One brief per person |
 | `docs/08_DEMO_AND_PITCH.md` | Demo script and pitch |
 | `docs/09_TIMELINE_CUTS_FAILURES.md` | Timeboxes and cut order |
