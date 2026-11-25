@@ -12,6 +12,8 @@ witness_*.jsonl
 model.joblib
 dataset/
 metrics.json
+metrics_detail.json
+metrics_sweep.json
 bench.json
 .ruff_cache/
 .DS_Store

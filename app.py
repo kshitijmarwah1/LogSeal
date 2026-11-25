@@ -15,9 +15,10 @@ except ImportError:
 
 def _mock(kind):
     h = lambda c: c * 64
+    # edit: server differs, vaults still hold the original.  rewrite: server looks clean, both vaults reject.
     nodes = [{"name": "Server", "role": "server", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "edit"},
              {"name": "Vault 1", "role": "vault", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "rewrite"},
-             {"name": "Vault 2", "role": "vault", "reachable": kind != "rewrite", "head_seq": 412, "head_hash": h("a"), "agrees": None if kind == "rewrite" else True}]
+             {"name": "Vault 2", "role": "vault", "reachable": True, "head_seq": 412, "head_hash": h("a"), "agrees": kind != "rewrite"}]
     fnd = [] if kind == "ok" else [{"class": "EDIT" if kind == "edit" else "WITNESS_CONFLICT", "seq": 120, "expected": h("a"), "actual": h("b"),
                                     "detail": "Record 120 was changed after it was sealed.", "confirmed_by": ["Vault 1", "Vault 2"]}]
     feed = [{"seq": i, "ts": f"2026-11-25T10:31:{i % 60:02d}", "event": "login_fail" if i % 7 == 0 else "file_read", "user": "alice",
@@ -26,8 +27,10 @@ def _mock(kind):
             "findings": fnd, "nodes": nodes, "feed": feed}
 
 def run_verify(mock):
-    if mock or _real_verify is None:
-        return _mock(mock or "ok")
+    if mock:
+        return _mock(mock)
+    if _real_verify is None:
+        raise RuntimeError("verify.py is not available")
     return _real_verify(seal.load_config(CFG))
 
 def short(x, full=False):
@@ -36,11 +39,18 @@ def short(x, full=False):
 def read_log_text():
     try:
         cfg = seal.load_config(CFG)
-        return open(cfg["log_path"], "rb").read().decode("utf-8", "replace").split("\n")
+        with open(cfg["log_path"], "rb") as f:
+            return f.read().decode("utf-8", "replace").split("\n")
     except Exception:
         return []
 
-SEEN = os.path.join(HERE, ".seen_lines.json")      # display-only cache of lines seen while status was OK
+def seen_path():
+    """Display-only cache lives next to the log, so parallel stacks cannot overwrite each other."""
+    try:
+        cfg = seal.load_config(CFG)
+        return os.path.join(os.path.dirname(os.path.abspath(cfg["log_path"])), ".seen_lines.json")
+    except Exception:
+        return os.path.join(HERE, ".seen_lines.json")
 
 def css():
     st.markdown("""<style>
@@ -84,7 +94,8 @@ def tiles(r, raw):
 def alarm(r, raw):
     lines = read_log_text()
     try:
-        seen = json.load(open(SEEN))
+        with open(seen_path()) as f:
+            seen = json.load(f)
     except Exception:
         seen = {}
     for f in r["findings"]:
@@ -127,7 +138,12 @@ def activity():
         cnt[s] = cnt.get(s, 0) + 1
     st.subheader("Activity (events per 10 seconds)")
     st.bar_chart(pd.Series({time.strftime("%H:%M:%S", time.gmtime(k)): v for k, v in sorted(cnt.items())}))
-    bad = [w["window_start"][11:19] for w in ml.flag_windows(evs) if w["flagged"]]
+    try:
+        bad = [w["window_start"][11:19] for w in ml.flag_windows(evs) if w["flagged"]]
+    except FileNotFoundError:
+        st.markdown('<div class="alarm" style="background:#fef3c7;border-color:#d97706;color:#78350f">Model not trained. Run <code>make dataset</code> then <code>make train</code>.</div>',
+                    unsafe_allow_html=True)
+        return
     if bad:
         st.markdown(f'<div class="alarm" style="background:#fef3c7;border-color:{AMBER};color:#78350f">Suspicious burst of failed logins around {", ".join(bad[-3:])}</div>',
                     unsafe_allow_html=True)
@@ -142,7 +158,8 @@ def dashboard(raw, mock, chart):
         try:
             lines = read_log_text()
             base = max(0, len(lines) - 201)
-            json.dump({str(i + 1): l for i, l in enumerate(lines[base:], base)}, open(SEEN, "w"))
+            with open(seen_path(), "w") as f:
+                json.dump({str(i + 1): l for i, l in enumerate(lines[base:], base)}, f)
         except Exception:
             pass
     for section in (lambda: banner(r), lambda: tiles(r, raw), lambda: alarm(r, raw) if r["findings"] else None, lambda: feed(r)):
@@ -166,15 +183,21 @@ if stage:
 else:
     with st.sidebar:
         st.title("LogSeal")
-        st.button("Verify now")
+        if st.button("Verify now", use_container_width=True):
+            st.rerun()
         raw = st.toggle("Show raw detail", False)
         chart = st.toggle("Activity chart", True)
         with st.expander("Benchmark numbers"):
             for f, label in (("bench.json", "Mutation test"), ("metrics.json", "Burst detector")):
                 p = os.path.join(HERE, f)
                 st.markdown(f"**{label}**")
-                st.json(json.load(open(p))) if os.path.exists(p) else st.write("not run yet")
-st.title("LogSeal: tamper-evident security log") if not stage else None
+                if os.path.exists(p):
+                    with open(p) as fh:
+                        st.json(json.load(fh))
+                else:
+                    st.write("not run yet")
+if not stage:
+    st.title("LogSeal: tamper-evident security log")
 steps()
 if hasattr(st, "fragment"):
     dashboard = st.fragment(run_every=2)(dashboard)

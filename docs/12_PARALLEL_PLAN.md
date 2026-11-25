@@ -9,6 +9,7 @@ This document explains the base that is ready now. Read `TASKS.md` first, then y
 | Contract gate | `scripts/check_contract.py` | Fails fast when config, signatures or stdlib-only rules break |
 | Test suite | `tests/` | 42 tests: mutations, vault API, restart, two-vault end-to-end |
 | Private stack | `scripts/local_stack.py` | Two vaults, generator and console on your own ports |
+| Demo check | `scripts/demo_check.py` | Runs all three demo acts on real vaults and asserts the result |
 | One-command setup | `scripts/bootstrap.sh` | Venv, dependencies, contract check, tests |
 | CI | `.forgejo/workflows/ci.yml` | Contract, tests, selftest, lint, scenario and ML smoke |
 | Ownership | `CODEOWNERS` | Reminds reviewers which lane owns each file |
