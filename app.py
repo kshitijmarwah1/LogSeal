@@ -44,41 +44,72 @@ SEEN = os.path.join(HERE, ".seen_lines.json")      # display-only cache of lines
 
 def css():
     st.markdown("""<style>
-    html, body, [class*="css"] {font-size: 20px;}
-    .stApp {background: #f8fafc; color: #0f172a;}
-    .steps {display:flex; gap:16px; margin-bottom:12px}
-    .step {flex:1; background:#e2e8f0; border-radius:14px; padding:12px 16px}
-    .step b {font-size:26px}
-    .banner {font-size:56px; font-weight:900; color:#fff; text-align:center; border-radius:20px; padding:18px; margin:10px 0}
-    @keyframes pulse {0%,100%{opacity:1} 50%{opacity:.6}}
-    .pulse {animation: pulse 1s infinite}
-    .tiles {display:flex; gap:16px}
-    .tile {flex:1; border-radius:18px; border:6px solid; background:#fff; text-align:center; padding:14px}
-    .tile .n {font-size:30px; font-weight:800} .tile .tick {font-size:72px; line-height:1.1} .tile .fp {font-family:monospace; font-size:24px}
-    .alarm {background:#fee2e2; border:4px solid #dc2626; border-radius:16px; padding:14px 20px; margin:14px 0; color:#7f1d1d}
-    table.feed {width:100%; border-collapse:collapse; font-size:20px} table.feed td, table.feed th {padding:6px 10px; text-align:left}
-    table.feed tr.bad {background:#fecaca; color:#7f1d1d; font-weight:700}
+    :root {--ink:#142238;--muted:#64748b;--line:#e2e8f0;--surface:#fff;--canvas:#f4f7fb;}
+    html, body, [class*="css"] {font-size:16px;color:var(--ink);}
+    .stApp {background:var(--canvas);}
+    [data-testid="stHeader"] {background:rgba(244,247,251,.88);}
+    [data-testid="stSidebar"] {background:#eef3f9;border-right:1px solid var(--line);}
+    [data-testid="stMainBlockContainer"] {max-width:1500px;padding-top:2rem;padding-bottom:3rem;}
+    h1,h2,h3 {color:var(--ink);letter-spacing:-.035em;}
+    .topbar {display:flex;align-items:center;gap:14px;margin:0 0 24px;}
+    .brand-mark {width:44px;height:44px;border-radius:14px;background:#163b67;color:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:800;box-shadow:0 5px 14px #163b6728;}
+    .brand-title {font-size:26px;font-weight:800;line-height:1.15;letter-spacing:-.04em;color:var(--ink);}
+    .brand-subtitle {font-size:14px;color:var(--muted);margin-top:4px;}
+    .section-label {font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;font-weight:800;margin:4px 0 10px;}
+    .steps {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px;}
+    .step {display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px #14223808;}
+    .step-num {flex:0 0 30px;height:30px;border-radius:10px;background:#e8eff8;color:#1e4c7c;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;}
+    .step b {font-size:14px;letter-spacing:.04em;color:#21364f;}
+    .step-copy {font-size:13px;color:var(--muted);line-height:1.4;margin-top:3px;}
+    .banner {display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:128px;color:#fff;text-align:center;border-radius:18px;padding:20px 24px;margin:8px 0 12px;box-shadow:0 8px 24px #14223818;}
+    .banner-title {font-size:clamp(30px,3.5vw,46px);font-weight:850;line-height:1.1;letter-spacing:.01em;}
+    .banner-meta {font-size:14px;opacity:.9;margin-top:8px;font-weight:550;}
+    @keyframes pulse {0%,100%{box-shadow:0 8px 24px #dc262633}50%{box-shadow:0 8px 32px #dc262677}}
+    .pulse {animation:pulse 1.5s ease-in-out infinite;}
+    .tiles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0 22px;}
+    .tile {min-width:0;border:1px solid var(--line);border-top:4px solid;border-radius:15px;background:var(--surface);text-align:left;padding:17px 18px 15px;box-shadow:0 3px 12px #14223808;}
+    .tile-head {display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .tile .n {font-size:17px;font-weight:750;color:#1b2d43;}
+    .role {font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8290a2;font-weight:750;}
+    .tile .rec {font-size:13px;color:var(--muted);margin-top:15px;}
+    .tile .fp {font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;color:#334b67;background:#f5f8fc;border:1px solid #e9eef5;border-radius:8px;padding:7px 9px;margin-top:6px;overflow-wrap:anywhere;}
+    .tile-status {display:flex;align-items:center;gap:7px;margin-top:13px;font-size:13px;font-weight:700;}
+    .dot {width:9px;height:9px;border-radius:50%;display:inline-block;}
+    .alarm {background:#fff5f5;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:13px;padding:16px 18px;margin:14px 0;color:#7f1d1d;box-shadow:0 3px 12px #7f1d1d0a;}
+    .alarm code {color:#7f1d1d;background:#ffe4e6;padding:2px 5px;border-radius:4px;}
+    table.feed {width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14px;box-shadow:0 3px 12px #14223808;}
+    table.feed td,table.feed th {padding:11px 14px;text-align:left;border-bottom:1px solid #edf1f6;}
+    table.feed th {background:#f8fafc;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;}
+    table.feed tr:last-child td {border-bottom:0;}
+    table.feed td:first-child {width:35px;text-align:center;color:#56806b;}
+    table.feed tr.bad {background:#fff1f2;color:#9f1239;font-weight:700;}
+    @media(max-width:800px){.steps,.tiles{grid-template-columns:1fr}.banner-title{font-size:30px}.tile{padding:14px}}
     </style>""", unsafe_allow_html=True)
 
 def steps():
-    s = [("1 RECORD", "Every action is written to a log"), ("2 SEAL", "A fingerprint of each record is sent to independent vaults"),
-         ("3 COMPARE", "If anything changes, the machines disagree")]
-    st.markdown('<div class="steps">' + "".join(f'<div class="step"><b>{a}</b><br>{b}</div>' for a, b in s) + "</div>", unsafe_allow_html=True)
+    s = [("1", "RECORD", "Every action is written to a log"), ("2", "SEAL", "Each record fingerprint is sent to independent vaults"),
+         ("3", "COMPARE", "Changes make the machines disagree")]
+    st.markdown('<div class="steps">' + "".join(f'<div class="step"><div class="step-num">{n}</div><div><b>{a}</b><div class="step-copy">{b}</div></div></div>' for n, a, b in s) + "</div>", unsafe_allow_html=True)
 
 def banner(r):
     txt, col, cls = {"OK": ("ALL RECORDS INTACT", GREEN, ""), "PENDING": ("SEALING...", AMBER, ""),
                      "TAMPERED": ("TAMPERING DETECTED", RED, "pulse")}[r["status"]]
-    st.markdown(f'<div class="banner {cls}" style="background:{col}">{txt}</div>', unsafe_allow_html=True)
+    meta = f'{r["log_lines"]:,} records checked · {r["ledger_entries"]:,} sealed'
+    st.markdown(f'<div class="banner {cls}" style="background:{col}"><div class="banner-title">{txt}</div><div class="banner-meta">{meta}</div></div>', unsafe_allow_html=True)
 
 def tiles(r, raw):
     out = []
     for n in r["nodes"]:
         ag = n["agrees"]
-        col, tick = (GREY, "OFFLINE") if ag is None else ((GREEN, "✔") if ag else (RED, "✘"))
-        rec = "" if ag is None else f"Record #{n['head_seq']}"
+        col, tick = (GREY, "") if ag is None else ((GREEN, "✔") if ag else (RED, "✘"))
+        rec = "No connection" if ag is None else f"Latest record · #{n['head_seq']}"
         fp = "" if ag is None else short(n["head_hash"], raw)
-        out.append(f'<div class="tile" style="border-color:{col}"><div class="n">{html.escape(n["name"])}</div><div>{rec}</div>'
-                   f'<div class="fp">{fp}</div><div class="tick" style="color:{col};{"font-size:44px" if ag is None else ""}">{tick}</div></div>')
+        role = "INDEPENDENT VAULT" if n["role"] == "vault" else "LOCAL LEDGER"
+        label = "OFFLINE" if ag is None else ("IN SYNC" if ag else "MISMATCH")
+        out.append(f'<div class="tile" style="border-top-color:{col}"><div class="tile-head"><div class="n">{html.escape(n["name"])}</div><div class="role">{role}</div></div>'
+                   f'<div class="rec">{rec}</div>'
+                   f'<div class="fp">{html.escape(fp) if fp else "Fingerprint unavailable"}</div>'
+                   f'<div class="tile-status" style="color:{col}"><span class="dot" style="background:{col}"></span>{tick if ag is None else ""} {label}</div></div>')
     st.markdown('<div class="tiles">' + "".join(out) + "</div>", unsafe_allow_html=True)
 
 def alarm(r, raw):
@@ -106,7 +137,7 @@ def feed(r):
         ev = "UNREADABLE" if x["event"] == "UNPARSEABLE" else html.escape(str(x["event"]))
         rows.append(f'<tr class="{"bad" if bad else ""}"><td>{"⚠" if bad else "🔒"}</td><td>#{x["seq"]}</td><td>{html.escape(str(x.get("ts") or "")[11:19])}</td>'
                     f'<td>{html.escape(str(x.get("user") or ""))}</td><td>{ev}</td><td>{html.escape(str(x.get("src_ip") or ""))}</td></tr>')
-    st.markdown('<table class="feed"><tr><th></th><th>Record</th><th>Time</th><th>User</th><th>Event</th><th>IP</th></tr>' + "".join(rows) + "</table>",
+    st.markdown('<div class="section-label">Recent activity</div><table class="feed"><tr><th></th><th>Record</th><th>Time</th><th>User</th><th>Event</th><th>IP address</th></tr>' + "".join(rows) + "</table>",
                 unsafe_allow_html=True)
 
 def activity():
@@ -174,7 +205,8 @@ else:
                 p = os.path.join(HERE, f)
                 st.markdown(f"**{label}**")
                 st.json(json.load(open(p))) if os.path.exists(p) else st.write("not run yet")
-st.title("LogSeal: tamper-evident security log") if not stage else None
+st.markdown('<div class="topbar"><div class="brand-mark">L</div><div><div class="brand-title">LogSeal</div><div class="brand-subtitle">Tamper-evident security monitoring</div></div></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">Integrity overview</div>', unsafe_allow_html=True)
 steps()
 if hasattr(st, "fragment"):
     dashboard = st.fragment(run_every=2)(dashboard)
