@@ -21,6 +21,8 @@ jobs:
         run: python -m unittest discover -s tests -t . -v
       - name: Core selftest
         run: python seal.py --selftest
+      - name: Three demo acts on real vaults
+        run: python scripts/demo_check.py
       - name: Lint
         run: ruff check .
 
@@ -44,3 +46,7 @@ jobs:
           python ml.py eval
       - name: Check measured outputs exist
         run: python -c "import json; json.load(open('bench.json')); m=json.load(open('metrics.json')); assert set(m) >= {'precision','recall','f1','threshold'}"
+      - name: Burst detector unit tests
+        run: python -m unittest tests.test_ml -v
+      - name: Five-seed score range
+        run: python scripts/model_sweep.py
